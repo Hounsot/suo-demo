@@ -15,7 +15,15 @@ form.addEventListener('submit',async event=>{
   const frame=document.createElement('iframe');
   frame.title='Метрики и навигация';frame.setAttribute('sandbox','allow-scripts allow-downloads allow-modals allow-top-navigation-by-user-activation');
   frame.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;background:#101114';
-  frame.srcdoc=payload.document;
+  // srcdoc resolves relative anchors against its parent's URL. Keep section
+  // links inside the decrypted document instead of reopening the login page.
+  function localSections(){document.addEventListener('click',event=>{
+   const link=event.target.closest('a[href^="#"]');if(!link)return;
+   const section=document.getElementById(link.getAttribute('href').slice(1));
+   if(section){event.preventDefault();section.scrollIntoView({block:'start'});}
+  },true);}
+  const router='<script>('+localSections.toString()+')();</script>';
+  frame.srcdoc=payload.document.replace('</body>',router+'</body>');
   document.body.replaceChildren(frame);document.body.style.display='block';document.title='СУО — логика новой навигации';
  }catch{message.textContent='Неверный пароль. Попробуйте ещё раз.';password.select();submit.disabled=false;submit.textContent='Открыть метрики';}
 });
